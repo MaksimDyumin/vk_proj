@@ -4,4 +4,9 @@ from django.contrib.auth.models import AbstractUser
 # Create your models here.
 
 class User(AbstractUser):
-    pass
+    friends = models.ManyToManyField('User', blank=True)
+
+
+class FriendRequest(models.Model):
+    from_user = models.ForeignKey(User, related_name="outgoing_requests", on_delete=models.CASCADE)
+    to_user = models.ForeignKey(User, related_name="incoming_requests", on_delete=models.CASCADE)
