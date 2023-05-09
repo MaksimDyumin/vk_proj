@@ -1,3 +1,5 @@
+from enum import Enum
+
 from django.shortcuts import render
 from django.db import transaction
 
@@ -41,6 +43,13 @@ class UserFriendsListView(ListAPIView):
         return self.request.user.friends.all()
 
 
+class FriendStatus(str, Enum):
+    FRIENDS = 'FRIENDS'
+    INCOMING_REQUEST = 'INCOMING_REQUEST'
+    OUTGOING_REQUEST = 'OUTGOING_REQUEST'
+    NOT_FRIENDS = 'NOT_FRIENDS'
+
+
 class UserFriendStatusView(RetrieveDestroyAPIView):
     """
     GET инфо o реквесте в друзья, DELETE удаляет из друзей пользователя c Pk
@@ -48,35 +57,32 @@ class UserFriendStatusView(RetrieveDestroyAPIView):
     """
 
     permission_classes = [IsAuthenticated]
-    serializer_class = UserFriendStatusSerializer
-
+    queryset = User.objects.all()
     
-    def get(self, request, *args, **kwargs):
+    def retrieve(self, request, *args, **kwargs):
         user = self.request.user
-        user_id_to_get_status = kwargs.get('pk')
-        friends = user.friends.all().values()
-        outgoing_requests = user.outgoing_requests.all().values()
-        incoming_requests = user.incoming_requests.all().values()
+        user_to_check = self.get_object()
 
-        friends_ids = [x['id'] for x in friends]
-        to_user_ids = [x['to_user_id'] for x in outgoing_requests]
-        from_user_ids = [x['from_user_id'] for x in incoming_requests]
+        are_friends = user.friends.filter(pk=user_to_check.id).exists()
+        has_incoming_request = user.incoming_requests.filter(from_user_id=user_to_check.id).exists()
+        has_outgoing_request = user.outgoing_requests.filter(to_user_id=user_to_check.id).exists()
+        
+        messages = {
+            FriendStatus.NOT_FRIENDS: 'Нет ничего!',
+            FriendStatus.FRIENDS: 'Уже друзья!',
+            FriendStatus.INCOMING_REQUEST: 'Есть входящая заявка!',
+            FriendStatus.OUTGOING_REQUEST: 'Есть исходящая заявка!',
+        }
 
-        if user_id_to_get_status in friends_ids:
-            return Response({'message': 'Уже друзья!'})
+        status = FriendStatus.NOT_FRIENDS
+        if are_friends:
+            status = FriendStatus.FRIENDS
+        elif has_incoming_request:
+            status = FriendStatus.INCOMING_REQUEST
+        elif has_outgoing_request:
+            status = FriendStatus.OUTGOING_REQUEST
         
-        if user_id_to_get_status in from_user_ids:
-            return Response({'message': 'Есть входящая заявка!'})
-        
-        if user_id_to_get_status in to_user_ids:
-            return Response({'message': 'Есть исходящая заявка!'})
-        
-        return Response({'message': 'Нет ничего!'})
-        
-
-    def get_queryset(self):
-        return self.request.user.friends.all()
-    
+        return Response({'message': messages[status], 'status': status})
 
     def perform_destroy(self, instance):
         with transaction.atomic():
