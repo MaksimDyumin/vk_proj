@@ -119,11 +119,9 @@ class FriendIncomingRequestView(DestroyAPIView,
 
     def perform_update(self, serializer):
         with transaction.atomic():
+            user = self.request.user
             new_friend = serializer.instance.from_user
-            self.request.user.friends.add(new_friend)
-            self.request.user.save()
-            new_friend.friends.add(self.request.user)
-            new_friend.save()
+            user.make_friends(new_friend)
             serializer.instance.delete()
 
 
@@ -146,10 +144,7 @@ class FriendOutgoingRequestsView(ListCreateAPIView):
             
             try:
                 incoming_request = user.incoming_requests.filter(from_user=to_user).get()
-                user.friends.add(to_user)
-                user.save()
-                to_user.friends.add(user)
-                to_user.save()
+                user.make_friends(to_user)
                 incoming_request.delete()
             except FriendRequest.DoesNotExist:
                 serializer.save()
