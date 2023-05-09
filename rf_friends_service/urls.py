@@ -23,12 +23,12 @@ urlpatterns = [
   path('', views.HelloWorldView.as_view()),
   path('register/', views.RegistrationView.as_view()),
 
-  path('user/friends/', views.HelloWorldView.as_view()), # список друзей (GET)
-  path('user/friends/<int:pk>', views.HelloWorldView.as_view()), # пользователь (инфо о реквесте в друзья GET, удалить из друзей DELETE)
+  path('user/friends/', views.UserFriendsListView.as_view()), # список друзей (GET) << ||| >>
+  path('user/friends/<int:pk>', views.UserFriendStatusView.as_view()), # пользователь (инфо о реквесте в друзья GET, удалить из друзей DELETE)
 
-  path('user/friend_requests/incoming/', views.HelloWorldView.as_view()), # список входящих заявок (посмотреть GET)
-  path('user/friend_requests/incoming/<int:pk>/', views.HelloWorldView.as_view()), # действия с нужной заявкой (принять PUT, отклонить DELETE)
+  path('user/friend_requests/incoming/', views.FriendsIncomingRequestListView.as_view()), # список входящих заявок (посмотреть GET)
+  path('user/friend_requests/incoming/<int:pk>/', views.FriendIncomingRequestView.as_view()), # действия с нужной заявкой (принять PUT, отклонить DELETE)
 
-  path('user/friend_requests/outgoing/', views.HelloWorldView.as_view()),# список исходящих заявок (посмотреть GET, создать POST)
-  path('user/friend_requests/outgoing/<int:pk>/', views.HelloWorldView.as_view()),# действия с нужной заявкой (отменить DELETE)
+  path('user/friend_requests/outgoing/', views.FriendOutgoingRequestsView.as_view()),# список исходящих заявок (посмотреть GET, создать POST)
+  path('user/friend_requests/outgoing/<int:pk>/', views.FriendOutgoingRequestView.as_view()),# действия с нужной заявкой (отменить DELETE)
 ]
