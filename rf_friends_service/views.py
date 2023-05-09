@@ -142,22 +142,18 @@ class FriendOutgoingRequestsView(ListCreateAPIView):
     def perform_create(self, serializer):
         with transaction.atomic():
             user = self.request.user
-            to_user_id = int(self.request.data['to_user'])
-            to_user = User.objects.filter(id=to_user_id)
-            to_user = to_user.get()
-            incoming_requests = user.incoming_requests.all().values()
-
-            from_user_ids = [x['from_user_id'] for x in incoming_requests]
-
-            if to_user_id in from_user_ids:
-                user.friends.add(to_user_id)
+            to_user = serializer.validated_data['to_user']
+            
+            try:
+                incoming_request = user.incoming_requests.filter(from_user=to_user).get()
+                user.friends.add(to_user)
                 user.save()
-                to_user.friends.add(user.id)
+                to_user.friends.add(user)
                 to_user.save()
-                friend_request = FriendRequest.objects.filter(from_user_id=1, to_user_id=2)
-                friend_request.delete()
-            else:
+                incoming_request.delete()
+            except FriendRequest.DoesNotExist:
                 serializer.save()
+                
 
 
 class FriendOutgoingRequestView(DestroyAPIView):
