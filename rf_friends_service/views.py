@@ -7,12 +7,11 @@ from rest_framework import views
 from rest_framework.request import Request
 from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveDestroyAPIView, ListCreateAPIView, DestroyAPIView, UpdateAPIView
 from rest_framework.response import Response
+from rest_framework.serializers import Serializer
 from rest_framework.permissions import IsAuthenticated
-
 
 from rf_friends_service.models import User, FriendRequest
 from rf_friends_service.serializers import RegisterUserSerializer, UserFriendsListSerializer, FriendOutgoingRequestsSerializer, FriendIncomingRequestSerializer, UserFriendStatusSerializer
-# Create your views here.
 
 
 class HelloWorldView(views.APIView):
@@ -89,7 +88,7 @@ class UserFriendStatusView(RetrieveDestroyAPIView):
             user = self.request.user
             user.friends.remove(instance)
             instance.friends.remove(user)
-    
+
 
 class FriendsIncomingRequestListView(ListAPIView):
     """
@@ -112,7 +111,7 @@ class FriendIncomingRequestView(DestroyAPIView,
     """
 
     permission_classes = [IsAuthenticated]
-    serializer_class = FriendIncomingRequestSerializer
+    serializer_class = Serializer
 
     def get_queryset(self):
         return self.request.user.incoming_requests.all()
@@ -148,7 +147,6 @@ class FriendOutgoingRequestsView(ListCreateAPIView):
                 incoming_request.delete()
             except FriendRequest.DoesNotExist:
                 serializer.save()
-                
 
 
 class FriendOutgoingRequestView(DestroyAPIView):
